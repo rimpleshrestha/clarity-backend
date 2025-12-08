@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  hashed_password String
+  bio             String?
+  profile_picture String?
+  cover_picture   String?
+  Journal         Journal[]
+  pin             Pin?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+}
+
+model Pin {
+  id         Int      @id @default(autoincrement())
+  code       String
+  user_id    Int      @unique
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Tag {
+  id         Int      @id @default(autoincrement())
+  name       String
+  journal    Journal? @relation(fields: [journalId], references: [id])
+  journalId  Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Mood {
+  id         Int       @id @default(autoincrement())
+  name       String
+  icon       String
+  journal    Journal[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+}
+
+model Journal {
+  id          Int      @id @default(autoincrement())
+  title       String
+  tag         Tag[]
+  mood        Mood?    @relation(fields: [mood_id], references: [id])
+  mood_id     Int?
+  entry       String
+  is_favorate Boolean  @default(false)
+  user        User?    @relation(fields: [user_id], references: [id])
+  user_id     Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
