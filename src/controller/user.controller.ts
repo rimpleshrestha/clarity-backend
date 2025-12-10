@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { userCreateSchema } from "../../lib/zod-schema.js";
 import bcrypt from "bcrypt";
 import { prisma } from "../../lib/prisma.js";
-import { decodeJWT, encryptJWT, type JWTData } from "../../lib/jwt.js";
+import { decodeJWT, encryptJWT, verifyJWT, type JWTData } from "../../lib/jwt.js";
 
 const signup = async (req: Request, res: Response) => {
   try {
@@ -160,14 +160,14 @@ const refreshRecycle = async (req: Request, res: Response) => {
         message: "Refresh token not found",
       });
     }
-    const decodedToken = decodeJWT(refreshToken);
+    const decodedToken = verifyJWT(refreshToken) as  {user_id: number} | null;
     if (!decodedToken) {
       return res.status(401).json({
         message: "token not able to be decoded",
       });
     }
     const access_token = encryptJWT({
-      data: { user_id: decodedToken.payload.user_id },
+      data: { user_id: decodedToken.user_id },
       TTL: "5m",
     });
     return res.status(200).json({

@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { decodeJWT } from "../../lib/jwt.js";
-import { TokenExpiredError } from "jsonwebtoken";
+import { decodeJWT, verifyJWT } from "../../lib/jwt.js";
 
 const authorizeUser = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers["authorization"];
@@ -14,11 +13,11 @@ const authorizeUser = (req: Request, res: Response, next: NextFunction) => {
     });
   }
   try {
-    const decodedToken = decodeJWT(token);
-    req.user = decodedToken.payload.user_id;
+    const decodedToken = verifyJWT(token) as { user_id: number };
+    req.user = decodedToken.user_id;
     next();
   } catch (error) {
-    if (error instanceof TokenExpiredError) {
+    if (error) {
       return res.status(403).json({ message: "Token expired" });
     }
     return res.status(401).json({ message: "Invalid token" });

@@ -21,10 +21,18 @@ app.use(
   })
 );
 // Routes
-
 import { prisma } from "../lib/prisma.js";
 import userRouter from "./routes/user.route.js";
+import tagRouter from "./routes/tag.route.js";
+import moodRouter from "./routes/feelings.route.js";
+import journalRouter from "./routes/journal.route.js";
+
 app.use("/api/v1", userRouter);
+app.use("/api/v1", tagRouter);
+app.use("/api/v1", moodRouter);
+
+app.use("/api/v1", journalRouter);
+
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("Global Error:", err);

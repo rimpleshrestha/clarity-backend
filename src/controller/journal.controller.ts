@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma.js";
 
 const createJournal = async (req: Request, res: Response) => {
   try {
+    const user_id = req.user;
     const validation = journalSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(401).json({
@@ -19,7 +20,7 @@ const createJournal = async (req: Request, res: Response) => {
         is_favorate: validation.data.is_favorate,
         title: validation.data.title,
         mood_id: validation.data.mood_id,
-        user_id: validation.data.user_id,
+        user_id,
         tag: {
           connect: validation.data.tag_id.map((tag_id) => ({
             id: tag_id,
@@ -178,7 +179,7 @@ const updateJournal = async (req: Request, res: Response) => {
         is_favorate: data.is_favorate,
         title: data.title,
         mood_id: data.mood_id,
-        user_id: data.user_id,
+        user_id,
         tag: {
           set: [],
           connect: data.tag_id.map((tagId) => ({ id: tagId })),
