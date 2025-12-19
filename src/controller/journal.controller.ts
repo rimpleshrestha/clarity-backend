@@ -1,11 +1,13 @@
+import bcrypt from "bcrypt";
 import type { Request, Response } from "express";
-import { journalSchema } from "../../lib/zod-schema.js";
+import { decryptAES, encryptAES } from "../../lib/crypto.js";
+import { encryptJWT } from "../../lib/jwt.js";
 import { prisma } from "../../lib/prisma.js";
-
+import { journalSchema } from "../../lib/zod-schema.js";
 const createJournal = async (req: Request, res: Response) => {
   try {
-    const user_id = req.user;
     const validation = journalSchema.safeParse(req.body);
+    const user_id = req.user;
     if (!validation.success) {
       return res.status(401).json({
         message: "Some Field are missing fill them ",
@@ -14,13 +16,14 @@ const createJournal = async (req: Request, res: Response) => {
         ),
       });
     }
+    const encryptedBody = encryptAES({ data: validation.data.entry });
     const create = await prisma.journal.create({
       data: {
-        entry: validation.data.entry,
+        entry: encryptedBody,
         is_favorate: validation.data.is_favorate,
         title: validation.data.title,
         mood_id: validation.data.mood_id,
-        user_id,
+        user_id: Number(user_id),
         tag: {
           connect: validation.data.tag_id.map((tag_id) => ({
             id: tag_id,
@@ -35,7 +38,6 @@ const createJournal = async (req: Request, res: Response) => {
       message: "Journal successfully created",
     });
   } catch (error) {
-    console.log("Something Went Wrong");
     return res.status(500).json({
       message: "Internal Server Error",
       error: JSON.stringify(error),
@@ -45,11 +47,12 @@ const createJournal = async (req: Request, res: Response) => {
 const getJournals = async (req: Request, res: Response) => {
   try {
     const user_id = req.user;
-    const { date_gte, date_lte, title, tag_id } = req.query as {
+    const { date_gte, date_lte, title, tag_id, is_favorite } = req.query as {
       title?: string;
       tag_id?: string;
       date_gte?: string;
       date_lte?: string;
+      is_favorite?: string;
     };
     if (!user_id) {
       return res.status(400).json({
@@ -72,6 +75,7 @@ const getJournals = async (req: Request, res: Response) => {
               },
             }
           : {},
+        is_favorate: is_favorite ? { equals: Boolean(is_favorite) } : {},
         created_at:
           date_gte || date_lte
             ? {
@@ -86,17 +90,11 @@ const getJournals = async (req: Request, res: Response) => {
       },
     });
 
-    if (!results.length) {
-      return res.status(400).json({
-        message: "Couldnt fetch the data",
-      });
-    }
     return res.status(200).json({
       message: "successfully fetched the journals",
       data: results,
     });
   } catch (error) {
-    console.log("Something Went Wrong");
     return res.status(500).json({
       message: "Internal Server Error",
       error: JSON.stringify(error),
@@ -132,7 +130,6 @@ const deleteJournal = async (req: Request, res: Response) => {
       message: "Journal deleted successfully",
     });
   } catch (error) {
-    console.log("Something Went Wrong");
     return res.status(500).json({
       message: "Internal Server Error",
       error: JSON.stringify(error),
@@ -171,15 +168,15 @@ const updateJournal = async (req: Request, res: Response) => {
     if (!existing) {
       return res.status(404).json({ message: "Journal not found" });
     }
-
+    const encryptedEntry = encryptAES({ data: data.entry });
     const updated = await prisma.journal.update({
       where: { id: Number(id) },
       data: {
-        entry: data.entry,
+        entry: encryptedEntry,
         is_favorate: data.is_favorate,
         title: data.title,
         mood_id: data.mood_id,
-        user_id,
+        user_id: Number(req.user),
         tag: {
           set: [],
           connect: data.tag_id.map((tagId) => ({ id: tagId })),
@@ -196,7 +193,6 @@ const updateJournal = async (req: Request, res: Response) => {
       data: updated,
     });
   } catch (error) {
-    console.log("Something Went Wrong");
     return res.status(500).json({
       message: "Internal Server Error",
       error: JSON.stringify(error),
@@ -204,4 +200,139 @@ const updateJournal = async (req: Request, res: Response) => {
   }
 };
 
-export { getJournals, createJournal, deleteJournal, updateJournal };
+const unlockJournal = async (req: Request, res: Response) => {
+  try {
+    const { pin } = req.body;
+    const user_id = Number(req.user);
+
+    const user_pin = await prisma.pin.findUnique({
+      where: {
+        user_id,
+      },
+    });
+    if (!user_pin) {
+      return res.status(400).json({
+        message: "User pin not found",
+      });
+    }
+    const comparePins = await bcrypt.compare(pin, user_pin?.code as string);
+    if (!comparePins) {
+    }
+    const unlockToken = encryptJWT({
+      data: {
+        user_id,
+      },
+      TTL: "5m",
+    });
+    return res.status(200).json({
+      message: "Pin matched",
+      data: {
+        "unlock-token": unlockToken,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: JSON.stringify(error),
+    });
+  }
+};
+const getJournalById = async (req: Request, res: Response) => {
+  try {
+    const user_id = req.user;
+    const entry_owner_id = req.unlock?.user_id;
+    if (user_id !== entry_owner_id) {
+      return res.status(400).json({
+        message: "The Owner doesnt match",
+      });
+    }
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        message: "Journal ID must be sent",
+      });
+    }
+    const journalEntry = await prisma.journal.findFirst({
+      where: {
+        id: Number(id),
+        user_id: user_id as number,
+      },
+      include: {
+        mood: true,
+        tag: true,
+      },
+    });
+    if (!journalEntry) {
+      return res.status(200).json({
+        message: "Failed to retreive the entry",
+      });
+    }
+    return res.status(200).json({
+      message: "Succesfully fetched the Entry",
+      data: {
+        ...journalEntry,
+        entry: decryptAES({ data: journalEntry.entry }),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: JSON.stringify(error),
+    });
+  }
+};
+const saveJournal = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.user;
+
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ message: "Valid Journal ID required" });
+    }
+
+    if (!user_id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const journal = await prisma.journal.findFirst({
+      where: {
+        id: Number(id),
+        user_id: Number(user_id),
+      },
+    });
+
+    if (!journal) {
+      return res.status(404).json({ message: "Journal not found" });
+    }
+
+    const updated = await prisma.journal.update({
+      where: { id: Number(id) },
+      data: {
+        is_favorate: !journal.is_favorate, // toggle
+      },
+    });
+
+    return res.status(200).json({
+      message: updated.is_favorate ? "Journal saved" : "Journal unsaved",
+      data: {
+        id: updated.id,
+        is_favorate: updated.is_favorate,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: JSON.stringify(error),
+    });
+  }
+};
+
+export {
+  saveJournal,
+  createJournal,
+  deleteJournal,
+  getJournals,
+  updateJournal,
+  unlockJournal,
+  getJournalById,
+};
