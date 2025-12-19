@@ -2,10 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { decodeJWT, verifyJWT } from "../../lib/jwt.js";
 
 const authorizeUser = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers["authorization"];
+  console.log(req.headers.authorization);
+  const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Missing or malformed token" });
   }
+  console.log("Authorization Header:", authHeader);
   const token = authHeader.split(" ")[1];
   if (!token) {
     return res.status(401).json({
@@ -14,6 +16,7 @@ const authorizeUser = (req: Request, res: Response, next: NextFunction) => {
   }
   try {
     const decodedToken = verifyJWT(token) as { user_id: number };
+    console.log("Decoded Token:", decodedToken);
     req.user = decodedToken.user_id;
     next();
   } catch (error) {
