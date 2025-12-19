@@ -14,7 +14,6 @@ const tagSchema = z.object({
 });
 const pinSchema = z.object({
   code: z.string().min(1, "Required"),
-  user_id: z.number(),
 });
 const journalSchema = z.object({
   title: z.string().min(1, "Required"),
@@ -22,7 +21,6 @@ const journalSchema = z.object({
   is_favorate: z.boolean().default(false),
   mood_id: z.number().min(1, "Required"),
   tag_id: z.array(z.number()).min(1, "Required"),
-
 });
 
 type userCreateType = z.infer<typeof userCreateSchema>;

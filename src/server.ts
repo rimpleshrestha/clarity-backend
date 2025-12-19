@@ -1,4 +1,3 @@
-
 import cors from "cors";
 import "dotenv/config";
 import express, {
@@ -6,13 +5,17 @@ import express, {
   type Request,
   type Response,
 } from "express";
-
+import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
+import { rateLimitOptions } from "../lib/rate-limit.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
-
+const limiter = rateLimit(rateLimitOptions);
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
@@ -20,9 +23,11 @@ app.use(
     credentials: true,
   })
 );
-// Routes
+app.use(limiter);
+
 import { prisma } from "../lib/prisma.js";
 import userRouter from "./routes/user.route.js";
+import pinRouter from "./routes/pin.route.js";
 import tagRouter from "./routes/tag.route.js";
 import moodRouter from "./routes/feelings.route.js";
 import journalRouter from "./routes/journal.route.js";
@@ -30,13 +35,10 @@ import journalRouter from "./routes/journal.route.js";
 app.use("/api/v1", userRouter);
 app.use("/api/v1", tagRouter);
 app.use("/api/v1", moodRouter);
-
+app.use("/api/v1", pinRouter);
 app.use("/api/v1", journalRouter);
 
-
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("Global Error:", err);
-  // Catches when you throw an error
   res.status(500).json({
     message: err.message || "Internal server error",
   });

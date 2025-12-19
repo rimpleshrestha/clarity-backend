@@ -4,6 +4,7 @@ import { pinSchema } from "../../lib/zod-schema.js";
 
 const createPin = async (req: Request, res: Response) => {
   try {
+    const user_id = req.user;
     const validation = pinSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(401).json({
@@ -16,7 +17,7 @@ const createPin = async (req: Request, res: Response) => {
     const create = await prisma.pin.create({
       data: {
         code: validation.data.code,
-        user_id: validation.data.user_id,
+        user_id: Number(user_id),
       },
     });
     if (!create) {
