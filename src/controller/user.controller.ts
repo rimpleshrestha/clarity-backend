@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { decodeJWT, encryptJWT, verifyJWT } from "../../lib/jwt.js";
 import { prisma } from "../../lib/prisma.js";
 import { userCreateSchema } from "../../lib/zod-schema.js";
-
+import uploadImageToCloudinary from "../../lib/cloudinary.js";
 const signup = async (req: Request, res: Response) => {
   try {
     const validation = userCreateSchema.safeParse(req.body);
@@ -220,5 +220,121 @@ const upsertUserPin = async (req: Request, res: Response) => {
   }
 };
 
-const updateUserDetails = async (req: Request, res: Response) => {};
+export const updateCoverImage = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user;
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No cover image file provided",
+      });
+    }
+
+    const cloudinaryResult = await uploadImageToCloudinary(
+      req.file.path,
+      `cover_${userId}`
+    );
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        cover_picture: cloudinaryResult.secure_url,
+      },
+      select: {
+        id: true,
+        name: true,
+        cover_picture: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Cover picture updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Cover image update error:", error);
+    return res.status(500).json({
+      message: "Failed to update cover picture",
+    });
+  }
+};
+export const updateProfileImage = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user;
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No image file provided",
+      });
+    }
+
+    // Upload to Cloudinary
+    const cloudinaryResult = await uploadImageToCloudinary(
+      req.file.path,
+      `profile_${userId}`
+    );
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        profile_picture: cloudinaryResult.secure_url,
+      },
+      select: {
+        id: true,
+        name: true,
+        profile_picture: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Profile image updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Profile image update error:", error);
+    return res.status(500).json({
+      message: "Failed to update profile image",
+    });
+  }
+};
+export const updateUserDetails = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user; // from auth middleware
+    const { name, bio } = req.body;
+
+    if (!name && !bio) {
+      return res.status(400).json({
+        message: "Nothing to update",
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(name && { name }),
+        ...(bio && { bio }),
+ 
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        bio: true,
+        profile_picture: true,
+        cover_picture: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "User details updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update user details error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
 export { login, logout, refreshRecycle, signup, upsertUserPin };

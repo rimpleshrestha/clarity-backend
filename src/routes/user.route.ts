@@ -4,9 +4,13 @@ import {
   logout,
   refreshRecycle,
   signup,
+  updateCoverImage,
+  updateProfileImage,
+  updateUserDetails,
   upsertUserPin,
 } from "../controller/user.controller.js";
 import { verifyJWT } from "../../lib/jwt.js";
+import upload from "../../lib/upload.js";
 import authorizeUser from "../middleware/verification.middleware.js";
 const router = express.Router();
 
@@ -15,4 +19,17 @@ router.post("/login", login);
 router.post("/upsert-pin", authorizeUser, upsertUserPin);
 router.get("/logout", logout);
 router.get("/refresh-token", refreshRecycle);
+router.put(
+  "/update-profile-image",
+  upload.single("pfp"),
+  authorizeUser,
+  updateProfileImage
+);
+router.put(
+  "/update-cover-image",
+  upload.single("cover"),
+  authorizeUser,
+  updateCoverImage
+);
+router.put("/update-details", authorizeUser, updateUserDetails);
 export default router;

@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import e from "express";
 import fs from "fs";
 import path from "path";
 
@@ -8,7 +9,10 @@ cloudinary.config({
   api_secret: process.env.VITE_CLOUDINARY_API_SECRET,
 });
 
-const uploadImageToCloudinary = async (localFilePath, publicId = null) => {
+const uploadImageToCloudinary = async (
+  localFilePath: string,
+  publicId = null
+) => {
   try {
     const result = await cloudinary.uploader.upload(localFilePath, {
       public_id: publicId || path.parse(localFilePath).name,
@@ -25,4 +29,4 @@ const uploadImageToCloudinary = async (localFilePath, publicId = null) => {
   }
 };
 
-module.exports = { uploadImageToCloudinary };
+export default uploadImageToCloudinary;
