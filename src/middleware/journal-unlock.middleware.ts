@@ -6,7 +6,7 @@ export const verifyUnlockToken = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers["x-unlock-token"];
+  const token = req.headers["x-unlock-token"] ?? req.headers["unlock-token"];
   if (!token || typeof token !== "string") {
     return res.status(401).json({ message: "Unlock token required" });
   }

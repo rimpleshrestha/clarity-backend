@@ -84,6 +84,9 @@ const getJournals = async (req: Request, res: Response) => {
               }
             : {},
       },
+      orderBy: {
+        created_at: "desc",
+      },
       include: {
         tag: true,
         mood: true,
@@ -199,7 +202,6 @@ const updateJournal = async (req: Request, res: Response) => {
     });
   }
 };
-
 const unlockJournal = async (req: Request, res: Response) => {
   try {
     const { pin } = req.body;
@@ -210,26 +212,33 @@ const unlockJournal = async (req: Request, res: Response) => {
         user_id,
       },
     });
+
     if (!user_pin) {
       return res.status(400).json({
-        message: "User pin not found",
+        message: "User PIN not found",
       });
     }
-    const comparePins = await bcrypt.compare(pin, user_pin?.code as string);
+
+    const comparePins = await bcrypt.compare(pin, user_pin.code);
     if (!comparePins) {
+      return res.status(401).json({
+        message: "Invalid PIN",
+      });
     }
+
     const unlockToken = encryptJWT({
-      data: {
-        user_id,
-      },
+      data: { user_id },
       TTL: "5m",
     });
-    return res.status(200).json({
-      message: "Pin matched",
-      data: {
-        "unlock-token": unlockToken,
-      },
-    });
+
+    return res
+      .status(200)
+      .json({
+        message: "PIN matched",
+        data: {
+          "unlock-token": unlockToken,
+        },
+      });
   } catch (error) {
     return res.status(500).json({
       message: "Internal Server Error",
@@ -237,6 +246,7 @@ const unlockJournal = async (req: Request, res: Response) => {
     });
   }
 };
+
 const getJournalById = async (req: Request, res: Response) => {
   try {
     const user_id = req.user;
@@ -275,6 +285,7 @@ const getJournalById = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       message: "Internal Server Error",
       error: JSON.stringify(error),
