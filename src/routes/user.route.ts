@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  changePassword,
   getMe,
   login,
   logout,
@@ -33,5 +34,6 @@ router.put(
   updateCoverImage
 );
 router.put("/user/update-details", authorizeUser, updateUserDetails);
+router.put("/user/change-password", authorizeUser, changePassword);
 router.get("/me", authorizeUser, getMe);
 export default router;
