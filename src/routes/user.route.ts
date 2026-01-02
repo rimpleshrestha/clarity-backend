@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getMe,
   login,
   logout,
   refreshRecycle,
@@ -20,16 +21,17 @@ router.post("/upsert-pin", authorizeUser, upsertUserPin);
 router.get("/logout", logout);
 router.get("/refresh-token", refreshRecycle);
 router.put(
-  "/update-profile-image",
+  "/user/update-profile-image",
   upload.single("pfp"),
   authorizeUser,
   updateProfileImage
 );
 router.put(
-  "/update-cover-image",
+  "/user/update-cover-image",
   upload.single("cover"),
   authorizeUser,
   updateCoverImage
 );
-router.put("/update-details", authorizeUser, updateUserDetails);
+router.put("/user/update-details", authorizeUser, updateUserDetails);
+router.get("/me", authorizeUser, getMe);
 export default router;

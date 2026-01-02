@@ -313,7 +313,6 @@ export const updateUserDetails = async (req: Request, res: Response) => {
       data: {
         ...(name && { name }),
         ...(bio && { bio }),
- 
       },
       select: {
         id: true,
@@ -336,5 +335,37 @@ export const updateUserDetails = async (req: Request, res: Response) => {
     });
   }
 };
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user;
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        bio: true,
+        profile_picture: true,
+        cover_picture: true,
+        created_at: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.error("Get me error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch user",
+    });
+  }
+};
 export { login, logout, refreshRecycle, signup, upsertUserPin };
