@@ -4,6 +4,7 @@ import { decryptAES, encryptAES } from "../../lib/crypto.js";
 import { encryptJWT } from "../../lib/jwt.js";
 import { prisma } from "../../lib/prisma.js";
 import { journalSchema } from "../../lib/zod-schema.js";
+import { updateStreak } from "./streak.controller.js";
 const createJournal = async (req: Request, res: Response) => {
   try {
     const validation = journalSchema.safeParse(req.body);
@@ -34,6 +35,7 @@ const createJournal = async (req: Request, res: Response) => {
     if (!create) {
       return res.status(400).json({ message: "Failed to create" });
     }
+    await updateStreak(user_id);
     return res.status(201).json({
       message: "Journal successfully created",
     });
@@ -231,14 +233,12 @@ const unlockJournal = async (req: Request, res: Response) => {
       TTL: "5m",
     });
 
-    return res
-      .status(200)
-      .json({
-        message: "PIN matched",
-        data: {
-          "unlock-token": unlockToken,
-        },
-      });
+    return res.status(200).json({
+      message: "PIN matched",
+      data: {
+        "unlock-token": unlockToken,
+      },
+    });
   } catch (error) {
     return res.status(500).json({
       message: "Internal Server Error",

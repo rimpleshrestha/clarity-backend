@@ -25,6 +25,7 @@ model User {
   posts           Post[]
   likes           Like[]
   pin             Pin?
+  streak Streak?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 }
@@ -90,4 +91,12 @@ model Like {
   user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([post_id, user_id])
+}
+model Streak {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id])
+  currentCount    Int      @default(0)
+  longestStreak   Int      @default(0)
+  lastActivityAt  DateTime @default(now())
 }
