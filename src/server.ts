@@ -31,11 +31,13 @@ import pinRouter from "./routes/pin.route.js";
 import tagRouter from "./routes/tag.route.js";
 import moodRouter from "./routes/feelings.route.js";
 import journalRouter from "./routes/journal.route.js";
+import communityRouter from "./routes/community.route.js";
 
 app.use("/api/v1", userRouter);
 app.use("/api/v1", tagRouter);
 app.use("/api/v1", moodRouter);
 app.use("/api/v1", pinRouter);
+app.use("/api/v1", communityRouter);
 app.use("/api/v1", journalRouter);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

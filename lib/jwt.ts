@@ -9,7 +9,7 @@ interface DecodedJWT extends Jwt {
 }
 const encryptJWT = ({
   data,
-  TTL = "5m",
+  TTL = "50m",
 }: {
   data: JWTData;
   TTL?: SignOptions["expiresIn"];

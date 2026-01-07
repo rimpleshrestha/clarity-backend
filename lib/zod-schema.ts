@@ -23,6 +23,9 @@ const journalSchema = z.object({
   tag_id: z.array(z.number()).min(1, "Required"),
 });
 
+export const postSchema = z.object({
+  content: z.string().min(1, "Post content cannot be empty").max(500),
+});
 type userCreateType = z.infer<typeof userCreateSchema>;
 type moodType = z.infer<typeof moodSchema>;
 type tagType = z.infer<typeof tagSchema>;

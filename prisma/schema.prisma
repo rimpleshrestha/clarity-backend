@@ -22,6 +22,8 @@ model User {
   profile_picture String?
   cover_picture   String?
   Journal         Journal[]
+  posts           Post[]
+  likes           Like[]
   pin             Pin?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
@@ -66,4 +68,26 @@ model Journal {
   user_id     Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  content    String
+  image      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  author_id Int
+  author    User   @relation(fields: [author_id], references: [id])
+  likes     Like[]
+}
+
+model Like {
+  id      Int  @id @default(autoincrement())
+  post_id Int
+  user_id Int
+  post    Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([post_id, user_id])
 }
