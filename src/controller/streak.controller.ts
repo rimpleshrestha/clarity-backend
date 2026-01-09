@@ -53,14 +53,13 @@ export const updateStreak = async (userId: number) => {
     });
   }
 };
-export const getUserStreak = async (req: Request, res: Response) => {
+export const getUserStreak = async (user_id) => {
   try {
-    const userId = Number(req.user);
     const streak = await prisma.streak.findUnique({
-      where: { userId },
+      where: { userId: user_id },
     });
 
-    if (!streak) return res.json({ currentCount: 0 });
+    if (!streak) return { currentCount: 0 };
 
     // Check if the streak expired (user didn't post yesterday or today)
     const today = new Date();
@@ -73,11 +72,11 @@ export const getUserStreak = async (req: Request, res: Response) => {
 
     if (diffInDays > 1) {
       // Streak expired since last check
-      return res.json({ currentCount: 0, message: "Streak lost" });
+      return { currentCount: 0, message: "Streak lost" };
     }
 
-    return res.json(streak);
+    return streak;
   } catch (error) {
-    res.status(500).json({ message: "Error fetching streak" });
+    return { message: "Error fetching streak" };
   }
 };

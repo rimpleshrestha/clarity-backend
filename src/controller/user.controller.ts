@@ -4,6 +4,7 @@ import { decodeJWT, encryptJWT, verifyJWT } from "../../lib/jwt.js";
 import { prisma } from "../../lib/prisma.js";
 import { userCreateSchema } from "../../lib/zod-schema.js";
 import uploadImageToCloudinary from "../../lib/cloudinary.js";
+import { getUserStreak } from "./streak.controller.js";
 const signup = async (req: Request, res: Response) => {
   try {
     const validation = userCreateSchema.safeParse(req.body);
@@ -357,9 +358,10 @@ export const getMe = async (req: Request, res: Response) => {
         message: "User not found",
       });
     }
-
+    const streak = await getUserStreak(user.id);
     return res.status(200).json({
       user,
+      streak,
     });
   } catch (error) {
     console.error("Get me error:", error);

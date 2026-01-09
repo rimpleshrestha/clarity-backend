@@ -40,6 +40,7 @@ const createJournal = async (req: Request, res: Response) => {
       message: "Journal successfully created",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       message: "Internal Server Error",
       error: JSON.stringify(error),
