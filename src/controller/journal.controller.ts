@@ -50,13 +50,15 @@ const createJournal = async (req: Request, res: Response) => {
 const getJournals = async (req: Request, res: Response) => {
   try {
     const user_id = req.user;
-    const { date_gte, date_lte, title, tag_id, is_favorite } = req.query as {
-      title?: string;
-      tag_id?: string;
-      date_gte?: string;
-      date_lte?: string;
-      is_favorite?: string;
-    };
+    const { date_gte, date_lte, title, tag_id, is_favorite, feeling_id } =
+      req.query as {
+        title?: string;
+        tag_id?: string;
+        date_gte?: string;
+        date_lte?: string;
+        feeling_id?: string;
+        is_favorite?: string;
+      };
     if (!user_id) {
       return res.status(400).json({
         message: "User ID must be provided",
@@ -78,6 +80,7 @@ const getJournals = async (req: Request, res: Response) => {
               },
             }
           : {},
+        mood_id: feeling_id ? { equals: Number(feeling_id) } : {},
         is_favorate: is_favorite ? { equals: Boolean(is_favorite) } : {},
         created_at:
           date_gte || date_lte
@@ -193,6 +196,7 @@ const updateJournal = async (req: Request, res: Response) => {
         mood: true,
       },
     });
+    await updateStreak(user_id);
 
     return res.status(200).json({
       message: "Journal updated successfully",
