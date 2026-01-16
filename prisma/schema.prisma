@@ -12,7 +12,6 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
 model User {
   id              Int       @id @default(autoincrement())
   name            String
@@ -25,7 +24,7 @@ model User {
   posts           Post[]
   likes           Like[]
   pin             Pin?
-  streak Streak?
+  streak          Streak?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 }
@@ -34,7 +33,7 @@ model Pin {
   id         Int      @id @default(autoincrement())
   code       String
   user_id    Int      @unique
-  user       User     @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -42,7 +41,7 @@ model Pin {
 model Tag {
   id         Int      @id @default(autoincrement())
   name       String
-  journal    Journal? @relation(fields: [journalId], references: [id])
+  journal    Journal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
   journalId  Int?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -65,7 +64,7 @@ model Journal {
   mood_id     Int?
   entry       String
   is_favorate Boolean  @default(false)
-  user        User?    @relation(fields: [user_id], references: [id])
+  user        User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id     Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
@@ -79,7 +78,7 @@ model Post {
   updated_at DateTime @updatedAt
 
   author_id Int
-  author    User   @relation(fields: [author_id], references: [id])
+  author    User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
   likes     Like[]
 }
 
@@ -92,11 +91,12 @@ model Like {
 
   @@unique([post_id, user_id])
 }
+
 model Streak {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @unique
-  user            User     @relation(fields: [userId], references: [id])
-  currentCount    Int      @default(0)
-  longestStreak   Int      @default(0)
-  lastActivityAt  DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentCount   Int      @default(0)
+  longestStreak  Int      @default(0)
+  lastActivityAt DateTime @default(now())
 }

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   changePassword,
+  deleteUser,
   getMe,
   login,
   logout,
@@ -21,6 +22,7 @@ router.post("/login", login);
 router.post("/upsert-pin", authorizeUser, upsertUserPin);
 router.get("/logout", logout);
 router.get("/refresh-token", refreshRecycle);
+
 router.put(
   "/user/update-profile-image",
   upload.single("pfp"),
@@ -36,4 +38,5 @@ router.put(
 router.put("/user/update-details", authorizeUser, updateUserDetails);
 router.put("/user/change-password", authorizeUser, changePassword);
 router.get("/me", authorizeUser, getMe);
+router.delete("/user/delete-account", authorizeUser, deleteUser);
 export default router;

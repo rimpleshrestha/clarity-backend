@@ -427,4 +427,38 @@ export const changePassword = async (req: Request, res: Response) => {
     });
   }
 };
-export { login, logout, refreshRecycle, signup, upsertUserPin };
+ const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return res
+      .status(200)
+      .clearCookie("refresh-token", {
+        sameSite: "lax",
+        httpOnly: true,
+      })
+      .json({
+        message: "User account deleted successfully",
+      });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+export { login, logout, refreshRecycle, signup, upsertUserPin,deleteUser };
